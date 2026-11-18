@@ -6,6 +6,10 @@ An AI-powered engineering assistant that transforms product feature requests int
 
 **Tech Focus:** Rust · AI Agents · Repository Intelligence · Software Architecture · Human-in-the-Loop · React
 
+## System design
+
+![Product Engineering Agent system design](docs/architecture/system-design.png)
+
 ---
 
 ## The Problem
