@@ -1,0 +1,12 @@
+[package]
+name = "repo_intel"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+schemas = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+walkdir = { workspace = true }
+regex = { workspace = true }
