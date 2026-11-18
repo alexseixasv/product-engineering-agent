@@ -1,231 +1,115 @@
 # Product Engineering Agent
 
-### Rust-Powered AI Engineering Challenge
+**Evidence-based engineering proposals from product requests — before a sprint commitment.**
 
-An AI-powered engineering assistant that transforms product feature requests into technically validated, engineering-ready specifications by analyzing an existing codebase.
-
-**Tech Focus:** Rust · AI Agents · Repository Intelligence · Software Architecture · Human-in-the-Loop · React
-
-## System design
+A Rust-powered agent that inspects a real codebase, drafts feasibility / debt / requirements / Jira-ready backlog with source evidence, then stops for **human approval** before emitting design artifacts.
 
 ![Product Engineering Agent system design](docs/architecture/system-design.png)
 
 ---
 
-## The Problem
+## Why it exists
 
-In real-world software teams, Product Managers frequently request new features without having complete visibility into the existing codebase.
+Product Managers often ask for features without full visibility into architecture, reusable UI, APIs, or hidden debt. Engineering still owns the judgment call — but discovery can be accelerated.
 
-A seemingly simple feature can introduce architectural constraints, technical debt, security risks, missing dependencies, and unexpected implementation complexity.
+This project demonstrates an AI assistant that:
 
-Engineering teams must investigate these concerns before committing to delivery.
+- **understands before recommending**
+- **validates before concluding**
+- **asks approval before acting**
 
-**What if an AI agent could perform the initial technical discovery and prepare an evidence-based engineering proposal before development begins?**
-
-## The Challenge
-
-Build a Rust-powered AI agent capable of transforming a natural-language product request into a structured engineering proposal.
-
-The agent must inspect an existing application, understand its architectural conventions, identify reusable components, evaluate feasibility, and generate actionable engineering artifacts.
-
-The agent must not invent technical capabilities or automatically approve its own recommendations.
-
-## Example Scenario
-
-A Product Manager submits:
-
-> "We need an analytics dashboard where managers can monitor team productivity, overdue tasks, and project performance. It should support filters, charts, and CSV export. Can we deliver this next sprint?"
-
-The agent should investigate the existing codebase and answer:
-
-1. What functionality already exists?
-2. Which frontend components can be reused?
-3. Which APIs and database models support the request?
-4. What is missing?
-5. What technical debt could affect delivery?
-6. What architectural changes are required?
-7. What functional and non-functional requirements should be defined?
-8. How should the feature be broken down into Jira tickets?
-9. What could the proposed frontend look like?
-
-## Expected Workflow
-
-```text
-Product Manager Request
-         |
-         v
-Repository Discovery
-         |
-         v
-Design System Inspection
-         |
-         v
-Architecture & Feasibility Analysis
-         |
-         v
-Technical Debt Assessment
-         |
-         v
-Functional & Non-Functional Requirements
-         |
-         v
-Jira-Ready Backlog Generation
-         |
-         v
-Human-in-the-Loop Approval
-         |
-         v
-Design Specification (design.md)
-         |
-         v
-Frontend Prototype & Visual Snapshot
-```
-
-## Core Requirements
-
-### 1. Repository Intelligence
-
-Inspect an existing application to identify relevant components, APIs, domain models, database structures, and architectural patterns.
-
-All repository-based findings must include verifiable evidence.
-
-### 2. Architecture Reasoning
-
-Evaluate feature feasibility, architectural constraints, dependencies, risks, and potential implementation approaches.
-
-Distinguish confirmed facts from assumptions and unresolved questions.
-
-### 3. Technical Debt Detection
-
-Identify relevant technical debt, classify its impact, and recommend remediation when necessary.
-
-### 4. Requirements Engineering
-
-Generate structured functional and non-functional requirements with measurable acceptance criteria.
-
-### 5. Jira-Ready Backlog
-
-Transform approved requirements into epics, user stories, technical tasks, dependencies, and definitions of done.
-
-### 6. Human-in-the-Loop
-
-Require explicit human approval before finalizing implementation proposals or performing external actions.
-
-### 7. Design System Awareness
-
-Inspect the application's existing Design System and prioritize reusable components.
-
-### 8. Visual Feature Proposal
-
-Generate a `design.md` specification and a reproducible frontend snapshot for product review.
-
-## Technical Constraints
-
-- The backend must be implemented in **Rust**.
-- AI reasoning must be separated from deterministic application logic.
-- LLM outputs must follow validated schemas.
-- Repository analysis must be safe and read-only by default.
-- Technical conclusions must reference source evidence.
-- The system must support mocked LLM responses for automated testing.
-- Human approval must be recorded and enforced.
-- The application must expose a usable interface for reviewing generated proposals.
-
-## Suggested Technologies
-
-| Area | Technology |
-|---|---|
-| Backend | Rust, Axum, Tokio |
-| AI Integration | HTTP-based LLM provider |
-| Code Analysis | tree-sitter |
-| Serialization | Serde |
-| Database | PostgreSQL, SQLx |
-| Frontend | React, TypeScript |
-| Design System | Tailwind CSS, shadcn/ui |
-| Validation | JSON Schema |
-| UI Snapshots | Playwright |
-| Observability | tracing, OpenTelemetry |
-
-Technology choices beyond Rust are recommendations, not mandatory requirements.
-
-## Engineering Questions
-
-Before implementation, consider:
-
-- Should this be a single agent with tools or a multi-agent system?
-- How can repository context be collected efficiently?
-- When is AST-based analysis preferable to text search?
-- How can hallucinated architectural findings be detected?
-- How should agent state and approval transitions be modeled?
-- How can the system recover from failed LLM calls?
-- How can generated Jira tickets remain traceable to requirements?
-- How can visual proposals be generated reproducibly?
-- How should analysis accuracy be evaluated?
-
-## Definition of Done
-
-- [ ] A Product Manager can submit a feature request.
-- [ ] The agent inspects a real sample codebase.
-- [ ] Relevant architecture and components are identified.
-- [ ] Technical findings include source evidence.
-- [ ] Feasibility and technical debt reports are generated.
-- [ ] Functional and non-functional requirements are produced.
-- [ ] Jira-ready tickets are generated.
-- [ ] Human approval is enforced.
-- [ ] A `design.md` specification is produced.
-- [ ] A frontend snapshot can be reviewed.
-- [ ] Core workflows are covered by automated tests.
-
-## Engineering Philosophy
-
-**AI should accelerate engineering discovery, not replace engineering judgment.**
-
-The system should understand before recommending, validate before concluding, and request approval before acting.
+> AI should accelerate engineering discovery, not replace engineering judgment.
 
 ---
 
-**Status:** Engineering Challenge — Implemented MVP (Phases 0–8)
+## What you get
 
-This repository evolves through architecture decisions, implementation milestones, automated tests, and documented tradeoffs (Compound Engineering). See [`AGENTS.md`](AGENTS.md), [`docs/adr/`](docs/adr/), [`docs/pdr/`](docs/pdr/), and [`docs/process/AI_USAGE.md`](docs/process/AI_USAGE.md).
+| Capability | How it shows up |
+|---|---|
+| Repository intelligence | Read-only scan of `fixtures/sample-app` with path + excerpt evidence |
+| Design-system awareness | Detects reusable UI primitives (Button, Card, Table, Select, Badge) |
+| Feasibility & debt | Structured report with fact / assumption / open question labels |
+| Requirements engineering | FR/NFR with acceptance criteria |
+| Jira-ready backlog | Epics, stories, tasks traced to requirement IDs |
+| Human-in-the-loop | Hard gate: no `design.md` / snapshot until approve |
+| Review UX | React console for proposals, evidence, and decisions |
+| Testability | Mock LLM provider + `cargo test --workspace` + Playwright snapshot |
+
+Demo scenario: *analytics dashboard with filters, charts, and CSV export* against a sample productivity app that intentionally **does not** have those features yet.
+
+---
+
+## Architecture at a glance
+
+Single orchestrator, multi-stage pipeline (not an unbounded agent swarm):
+
+```text
+PM request → discovery → design system → feasibility → debt
+          → FR/NFR → backlog → HITL approve/reject
+          → design.md → visual snapshot
+```
+
+| Layer | Implementation |
+|---|---|
+| API | Rust · Axum · Tokio |
+| Agent / HITL | `crates/agent` state machine |
+| Repo intel | `crates/repo_intel` (read-only) |
+| Schemas | `crates/schemas` + JSON Schema contracts |
+| LLM | HTTP OpenAI-compatible + mock (`crates/llm`) |
+| Persistence (MVP) | In-memory runs + `artifacts/{run_id}/` files ([ADR-008](docs/adr/ADR-008-in-memory-run-store.md)) |
+| Review UI | React · TypeScript · Tailwind |
+| Fixture under analysis | `fixtures/sample-app` (Pulseboard) |
+
+Full diagram: [`docs/architecture/system-design.png`](docs/architecture/system-design.png)  
+Decisions: [`docs/adr/`](docs/adr/) · Product scope: [`docs/pdr/`](docs/pdr/)
+
+---
 
 ## Quick start
 
-### Prerequisites
-
-- Rust stable (`windows-gnu` on Windows without MSVC; put MinGW `bin` on `PATH`)
-- Node.js 20+
-
-### Sample fixture
+**Prerequisites:** Rust stable (on Windows without MSVC: `windows-gnu` + MinGW on `PATH`), Node.js 20+.
 
 ```bash
-cd fixtures/sample-app
-npm install
-npm run dev
-```
-
-### Backend API
-
-```bash
-# from repo root
+# API (default repo target: fixtures/sample-app)
 cargo run -p api
-# listens on 127.0.0.1:8080 by default
-# PEA_REPO_PATH=fixtures/sample-app
+# → http://127.0.0.1:8080
+
+# Review UI
+cd frontend && npm install && npm run dev
 ```
 
-### Review UI
+Submit a product request → review evidenced findings → **Approve** or **Reject** → only after approve, generate `design.md` under `artifacts/{run_id}/`.
 
 ```bash
-cd frontend
-npm install
-npm run dev
-```
+# Fixture app (the codebase being analyzed)
+cd fixtures/sample-app && npm install && npm run dev
 
-Open the UI, submit a product request, approve/reject, then generate `design.md` (written under `artifacts/{run_id}/`).
-
-### Tests
-
-```bash
+# Tests
 cargo test --workspace
 cd frontend && npm run test:e2e
 ```
 
-DoD evidence map: [`docs/plans/dod-evidence.md`](docs/plans/dod-evidence.md).
+---
+
+## Documentation map
+
+| Doc | What it is |
+|---|---|
+| [Challenge specification](docs/requirements/challenge-specification.md) | Original technical brief & DoD |
+| [ADRs](docs/adr/) | Architecture decisions (topology, evidence, HITL, LLM boundary…) |
+| [PDRs](docs/pdr/) | Product decisions |
+| [Specs / contracts](docs/specs/) | Proposal, evidence, approval, backlog schemas |
+| [DoD evidence](docs/plans/dod-evidence.md) | Checklist mapped to code/tests |
+| [AI usage log](docs/process/AI_USAGE.md) | Selection-process disclosure of AI assistance |
+| [AGENTS.md](AGENTS.md) | AI-ready operating map for contributors/agents |
+| [Solutions](docs/solutions/) | Durable engineering learnings |
+
+Built with a **Compound Engineering** workflow: every material decision records decider, rationale, and files touched.
+
+---
+
+## Status
+
+**MVP complete** (phases 0–8) for a selection-process / portfolio demonstration — not a production multi-tenant SaaS.
+
+Stack choices and tradeoffs are intentional and documented; start at the [challenge specification](docs/requirements/challenge-specification.md) if you want the original requirement text.

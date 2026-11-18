@@ -39,6 +39,8 @@ Located under [`.cursor/skills/`](.cursor/skills/):
 
 ```text
 docs/
+  requirements/ Original challenge brief & DoD
+  architecture/ System design visuals
   adr/          Architecture Decision Records
   pdr/          Product Decision Records
   plans/        Phase execution plans
@@ -63,7 +65,7 @@ frontend/               React review UI for proposals
 
 ## Definition of Done
 
-Track against the root [`README.md`](README.md) DoD checklist. Phase 8 must prove each item with evidence.
+Track against [`docs/requirements/challenge-specification.md`](docs/requirements/challenge-specification.md) and the evidence map in [`docs/plans/dod-evidence.md`](docs/plans/dod-evidence.md).
 
 ## Phase map
 
