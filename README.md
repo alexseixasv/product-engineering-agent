@@ -96,6 +96,7 @@ cd frontend && npm run test:e2e
 | Doc | What it is |
 |---|---|
 | [Challenge specification](docs/requirements/challenge-specification.md) | Original technical brief & DoD |
+| [Design options](docs/design/) | Visual directions for prototypes (Pulseboard vs Deal Feed) |
 | [ADRs](docs/adr/) | Architecture decisions (topology, evidence, HITL, LLM boundary…) |
 | [PDRs](docs/pdr/) | Product decisions |
 | [Specs / contracts](docs/specs/) | Proposal, evidence, approval, backlog schemas |

@@ -40,6 +40,7 @@ Located under [`.cursor/skills/`](.cursor/skills/):
 ```text
 docs/
   requirements/ Original challenge brief & DoD
+  design/       Selectable visual design systems for prototypes
   architecture/ System design visuals
   adr/          Architecture Decision Records
   pdr/          Product Decision Records
