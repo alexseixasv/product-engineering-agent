@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Accepted |
+| Status | Superseded by ADR-009 (Docker/Postgres default; memory remains for tests) |
 | Date | 2026-11-18 |
 | Decider(s) | Solution Architect (persona); Senior Software Engineer (persona) |
 | Area | Backend |

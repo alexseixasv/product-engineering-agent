@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pea
+      POSTGRES_PASSWORD: pea
+      POSTGRES_DB: pea
+    ports:
+      - "5432:5432"
+    volumes:
+      - pea_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pea -d pea"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://pea:pea@db:5432/pea
+      PEA_BIND: 0.0.0.0:8080
+      PEA_REPO_PATH: /app/fixtures/sample-app
+      PEA_ARTIFACTS_DIR: /app/artifacts
+      PEA_MIGRATIONS_DIR: /app/migrations
+      RUST_LOG: info
+    ports:
+      - "8080:8080"
+    volumes:
+      - pea_artifacts:/app/artifacts
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8088:80"
+    depends_on:
+      - api
+
+volumes:
+  pea_pg:
+  pea_artifacts:

@@ -1,4 +1,4 @@
-use agent::AgentPipeline;
+use agent::{AgentPipeline, InMemoryStore, RunStore};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -6,6 +6,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use db::{connect_postgres, migrate, PostgresStore};
 use llm::MockLlmProvider;
 use schemas::ApprovalDecision;
 use serde::{Deserialize, Serialize};
@@ -18,6 +19,7 @@ use tracing_subscriber::EnvFilter;
 struct AppState {
     pipeline: Arc<AgentPipeline>,
     default_repo: PathBuf,
+    db_enabled: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -52,18 +54,33 @@ async fn main() -> anyhow::Result<()> {
     let artifacts = std::env::var("PEA_ARTIFACTS_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from("artifacts"));
+    let migrations_dir = std::env::var("PEA_MIGRATIONS_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("migrations"));
 
-    // Default to mock provider for reproducible demos; set PEA_LLM=http for real provider later.
     let llm: Arc<dyn llm::LlmProvider> = Arc::new(MockLlmProvider::new(vec![]));
-    let pipeline = Arc::new(AgentPipeline::new(llm, artifacts));
+
+    let (store, db_enabled): (Arc<dyn RunStore>, bool) =
+        if let Ok(database_url) = std::env::var("DATABASE_URL") {
+            let pool = connect_postgres(&database_url).await?;
+            migrate(&pool, &migrations_dir).await?;
+            tracing::info!("using Postgres run store");
+            (Arc::new(PostgresStore::new(pool)), true)
+        } else {
+            tracing::warn!("DATABASE_URL not set; using in-memory run store");
+            (Arc::new(InMemoryStore::new()), false)
+        };
+
+    let pipeline = Arc::new(AgentPipeline::with_store(llm, artifacts, store));
 
     let state = AppState {
         pipeline,
         default_repo,
+        db_enabled,
     };
 
     let app = Router::new()
-        .route("/health", get(|| async { Json(serde_json::json!({"ok": true})) }))
+        .route("/health", get(health))
         .route("/api/runs", post(create_run).get(list_runs))
         .route("/api/runs/{id}", get(get_run))
         .route("/api/runs/{id}/decision", post(decide))
@@ -78,6 +95,13 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+async fn health(State(state): State<AppState>) -> impl IntoResponse {
+    Json(serde_json::json!({
+        "ok": true,
+        "db": if state.db_enabled { "postgres" } else { "memory" }
+    }))
+}
+
 async fn create_run(
     State(state): State<AppState>,
     Json(body): Json<CreateRunRequest>,
@@ -87,7 +111,11 @@ async fn create_run(
         .map(PathBuf::from)
         .unwrap_or_else(|| state.default_repo.clone());
     match state.pipeline.start_run(body.request, repo).await {
-        Ok(run) => (StatusCode::CREATED, Json(serde_json::to_value(run_json(&run)).unwrap())).into_response(),
+        Ok(run) => (
+            StatusCode::CREATED,
+            Json(serde_json::to_value(run_json(&run)).unwrap()),
+        )
+            .into_response(),
         Err(e) => (
             StatusCode::BAD_REQUEST,
             Json(ErrorBody {
@@ -99,23 +127,37 @@ async fn create_run(
 }
 
 async fn list_runs(State(state): State<AppState>) -> impl IntoResponse {
-    let runs: Vec<_> = state
-        .pipeline
-        .store
-        .list()
-        .into_iter()
-        .map(|r| run_json(&r))
-        .collect();
-    Json(runs)
+    match state.pipeline.store.list().await {
+        Ok(runs) => Json(
+            runs.into_iter()
+                .map(|r| run_json(&r))
+                .collect::<Vec<_>>(),
+        )
+        .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorBody {
+                error: e.to_string(),
+            }),
+        )
+            .into_response(),
+    }
 }
 
 async fn get_run(State(state): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
-    match state.pipeline.store.get(&id) {
-        Some(run) => Json(run_json(&run)).into_response(),
-        None => (
+    match state.pipeline.store.get(&id).await {
+        Ok(Some(run)) => Json(run_json(&run)).into_response(),
+        Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(ErrorBody {
                 error: format!("run {id} not found"),
+            }),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorBody {
+                error: e.to_string(),
             }),
         )
             .into_response(),
@@ -130,6 +172,7 @@ async fn decide(
     match state
         .pipeline
         .decide(&id, body.decision, &body.actor, body.comment)
+        .await
     {
         Ok(run) => Json(run_json(&run)).into_response(),
         Err(e) => (

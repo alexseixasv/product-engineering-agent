@@ -1,5 +1,5 @@
 use crate::hitl::RunMachine;
-use crate::store::{InMemoryStore, RunRecord};
+use crate::store::{InMemoryStore, RunRecord, RunStore, StoreError};
 use chrono::Utc;
 use llm::{LlmError, LlmProvider};
 use repo_intel::scan_repository;
@@ -20,6 +20,8 @@ pub enum PipelineError {
     Repo(#[from] repo_intel::RepoIntelError),
     #[error(transparent)]
     Llm(#[from] LlmError),
+    #[error(transparent)]
+    Store(#[from] StoreError),
     #[error("validation: {0}")]
     Validation(String),
     #[error("not found: {0}")]
@@ -29,15 +31,23 @@ pub enum PipelineError {
 }
 
 pub struct AgentPipeline {
-    pub store: InMemoryStore,
+    pub store: Arc<dyn RunStore>,
     pub llm: Arc<dyn LlmProvider>,
     pub artifacts_dir: PathBuf,
 }
 
 impl AgentPipeline {
     pub fn new(llm: Arc<dyn LlmProvider>, artifacts_dir: impl Into<PathBuf>) -> Self {
+        Self::with_store(llm, artifacts_dir, Arc::new(InMemoryStore::new()))
+    }
+
+    pub fn with_store(
+        llm: Arc<dyn LlmProvider>,
+        artifacts_dir: impl Into<PathBuf>,
+        store: Arc<dyn RunStore>,
+    ) -> Self {
         Self {
-            store: InMemoryStore::new(),
+            store,
             llm,
             artifacts_dir: artifacts_dir.into(),
         }
@@ -61,7 +71,7 @@ impl AgentPipeline {
             approval: None,
             error: None,
         };
-        self.store.insert(record.clone());
+        self.store.upsert(record.clone()).await?;
 
         let result = self
             .execute_pre_approval(&mut machine, &id, &request, &repo_path)
@@ -70,15 +80,15 @@ impl AgentPipeline {
         match result {
             Ok(proposal) => {
                 record.state = machine.state;
-                record.proposal = Some(proposal);
-                self.store.insert(record.clone());
+                record.proposal.replace(proposal);
+                self.store.upsert(record.clone()).await?;
                 Ok(record)
             }
             Err(e) => {
                 let _ = machine.transition(RunState::Failed);
                 record.state = RunState::Failed;
                 record.error = Some(e.to_string());
-                self.store.insert(record.clone());
+                self.store.upsert(record.clone()).await?;
                 Err(e)
             }
         }
@@ -104,10 +114,7 @@ impl AgentPipeline {
 
         machine.transition(RunState::AnalyzingFeasibility)?;
         let _ = self
-            .llm_with_retry(
-                "Assess feasibility. Return JSON with notes.",
-                request,
-            )
+            .llm_with_retry("Assess feasibility. Return JSON with notes.", request)
             .await?;
 
         machine.transition(RunState::AssessingDebt)?;
@@ -238,16 +245,17 @@ impl AgentPipeline {
         }
     }
 
-    pub fn decide(
+    pub async fn decide(
         &self,
         run_id: &str,
         decision: ApprovalDecision,
         actor: &str,
         comment: Option<String>,
     ) -> Result<RunRecord, PipelineError> {
-        let current = self
+        let mut current = self
             .store
             .get(run_id)
+            .await?
             .ok_or_else(|| PipelineError::NotFound(run_id.into()))?;
         let mut machine = RunMachine {
             state: current.state,
@@ -256,24 +264,20 @@ impl AgentPipeline {
         let approval = machine
             .apply_human_decision(run_id, decision, actor, comment)?
             .clone();
-        let state = machine.state;
-        let updated = self
-            .store
-            .update(run_id, |r| {
-                r.state = state;
-                r.approval = Some(approval.clone());
-            })
-            .ok_or_else(|| PipelineError::NotFound(run_id.into()))?;
-        Ok(updated)
+        current.state = machine.state;
+        current.approval = Some(approval);
+        self.store.upsert(current.clone()).await?;
+        Ok(current)
     }
 
     pub async fn generate_design_and_snapshot(
         &self,
         run_id: &str,
     ) -> Result<RunRecord, PipelineError> {
-        let current = self
+        let mut current = self
             .store
             .get(run_id)
+            .await?
             .ok_or_else(|| PipelineError::NotFound(run_id.into()))?;
         let mut machine = RunMachine {
             state: current.state,
@@ -305,18 +309,14 @@ impl AgentPipeline {
         let design_md_path = design_path.to_string_lossy().to_string();
         let snapshot_path_str = snapshot_path.to_string_lossy().to_string();
 
-        let updated = self
-            .store
-            .update(run_id, |r| {
-                r.state = machine.state;
-                if let Some(p) = r.proposal.as_mut() {
-                    p.design_md_path = Some(design_md_path.clone());
-                    p.snapshot_path = Some(snapshot_path_str.clone());
-                }
-            })
-            .ok_or_else(|| PipelineError::NotFound(run_id.into()))?;
+        current.state = machine.state;
+        if let Some(p) = current.proposal.as_mut() {
+            p.design_md_path = Some(design_md_path);
+            p.snapshot_path = Some(snapshot_path_str);
+        }
+        self.store.upsert(current.clone()).await?;
         let _ = Utc::now();
-        Ok(updated)
+        Ok(current)
     }
 }
 
@@ -393,6 +393,7 @@ mod tests {
                 "pm@example.com",
                 Some("looks good".into()),
             )
+            .await
             .unwrap();
         assert_eq!(approved.state, RunState::Approved);
         let done = pipeline

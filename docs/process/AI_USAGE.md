@@ -63,3 +63,15 @@ Every substantive AI contribution must be recorded here.
 | `fixtures/sample-app` build | PASS |
 | `frontend` build | PASS |
 | Playwright analytics prototype | PASS → `artifacts/playwright/analytics-prototype.png` |
+
+### 2026-11-18 — Docker + Postgres persistence
+
+| Field | Value |
+|---|---|
+| Date | 2026-11-18 |
+| Phase | infra follow-up |
+| Tool / model | Cursor agent (Composer) |
+| Purpose | Add Docker images, Compose stack, Postgres run store, migrations, ADR-009 |
+| Artifacts | `Dockerfile`; `frontend/Dockerfile`; `docker-compose.yml`; `migrations/`; `crates/db/**`; API/store refactor |
+| Human approval | User requested Docker/DB adjustments + commit |
+| Residual risk | Full `docker compose build` should be verified on a machine with Docker; image build time is substantial |

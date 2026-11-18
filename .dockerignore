@@ -1,0 +1,11 @@
+target
+**/target
+**/node_modules
+**/dist
+.git
+artifacts
+playwright-report
+test-results
+**/*.tsbuildinfo
+.env
+.env.*

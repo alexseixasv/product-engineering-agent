@@ -56,7 +56,7 @@ PM request → discovery → design system → feasibility → debt
 | Repo intel | `crates/repo_intel` (read-only) |
 | Schemas | `crates/schemas` + JSON Schema contracts |
 | LLM | HTTP OpenAI-compatible + mock (`crates/llm`) |
-| Persistence (MVP) | In-memory runs + `artifacts/{run_id}/` files ([ADR-008](docs/adr/ADR-008-in-memory-run-store.md)) |
+| Persistence | Postgres when `DATABASE_URL` is set ([ADR-009](docs/adr/ADR-009-docker-postgres-persistence.md)); in-memory otherwise for tests |
 | Review UI | React · TypeScript · Tailwind |
 | Fixture under analysis | `fixtures/sample-app` (Pulseboard) |
 
@@ -67,12 +67,35 @@ Decisions: [`docs/adr/`](docs/adr/) · Product scope: [`docs/pdr/`](docs/pdr/)
 
 ## Quick start
 
+### Option A — Docker Compose (API + Postgres + frontend)
+
+**Prerequisites:** Docker Desktop / Engine with Compose.
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| Review UI (nginx → API) | http://127.0.0.1:8088 |
+| API direct | http://127.0.0.1:8080 |
+| Postgres | `localhost:5432` (`pea` / `pea` / db `pea`) |
+
+Runs and approvals persist in Postgres. Artifacts land in the `pea_artifacts` volume.  
+Health: `GET /health` → `{ "ok": true, "db": "postgres" }`.
+
+### Option B — Local native
+
 **Prerequisites:** Rust stable (on Windows without MSVC: `windows-gnu` + MinGW on `PATH`), Node.js 20+.
 
 ```bash
-# API (default repo target: fixtures/sample-app)
+# API without DATABASE_URL → in-memory store
 cargo run -p api
 # → http://127.0.0.1:8080
+
+# Optional: Postgres locally
+# cp .env.example .env   # then export DATABASE_URL and run migrations via API startup
+# docker compose up db -d
 
 # Review UI
 cd frontend && npm install && npm run dev

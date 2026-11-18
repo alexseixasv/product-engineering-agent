@@ -10,6 +10,7 @@ path = "src/main.rs"
 
 [dependencies]
 agent = { workspace = true }
+db = { workspace = true }
 llm = { workspace = true }
 schemas = { workspace = true }
 axum = { workspace = true }

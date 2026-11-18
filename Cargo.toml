@@ -5,6 +5,7 @@ members = [
     "crates/repo_intel",
     "crates/llm",
     "crates/agent",
+    "crates/db",
     "crates/api",
 ]
 
@@ -29,7 +30,9 @@ async-trait = "0.1"
 anyhow = "1"
 walkdir = "2"
 regex = "1"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "json", "chrono", "tls-rustls"] }
 schemas = { path = "crates/schemas" }
 repo_intel = { path = "crates/repo_intel" }
 llm = { path = "crates/llm" }
 agent = { path = "crates/agent" }
+db = { path = "crates/db" }

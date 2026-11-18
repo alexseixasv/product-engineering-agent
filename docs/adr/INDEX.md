@@ -9,4 +9,5 @@
 | [ADR-005](ADR-005-llm-boundary.md) | LLM boundary and schema validation | Accepted | 2026-11-18 |
 | [ADR-006](ADR-006-persistence.md) | SQLite persistence for local runs | Accepted | 2026-11-18 |
 | [ADR-007](ADR-007-fixture-sample-app.md) | In-repo fixture sample app | Accepted | 2026-11-18 |
-| [ADR-008](ADR-008-in-memory-run-store.md) | In-memory run store + filesystem artifacts | Accepted | 2026-11-18 |
+| [ADR-008](ADR-008-in-memory-run-store.md) | In-memory run store + filesystem artifacts | Superseded by ADR-009 | 2026-11-18 |
+| [ADR-009](ADR-009-docker-postgres-persistence.md) | Docker Compose + PostgreSQL persistence | Accepted | 2026-11-18 |
