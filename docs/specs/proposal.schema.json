@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://product-engineering-agent.local/schemas/proposal.schema.json",
+  "title": "EngineeringProposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "request",
+    "findings",
+    "feasibility",
+    "technical_debt",
+    "requirements",
+    "backlog",
+    "open_questions"
+  ],
+  "properties": {
+    "run_id": { "type": "string" },
+    "request": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "feasibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "approach_options", "risks"],
+      "properties": {
+        "summary": { "type": "string" },
+        "approach_options": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "risks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "technical_debt": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "impact", "recommendation", "confidence"],
+        "properties": {
+          "title": { "type": "string" },
+          "impact": { "type": "string", "enum": ["low", "medium", "high"] },
+          "recommendation": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["fact", "assumption", "open_question"] },
+          "evidence": {
+            "type": "array",
+            "items": { "$ref": "evidence.schema.json" }
+          }
+        }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["functional", "non_functional"],
+      "properties": {
+        "functional": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/requirement" }
+        },
+        "non_functional": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/requirement" }
+        }
+      }
+    },
+    "backlog": {
+      "type": "array",
+      "items": { "$ref": "backlog-ticket.schema.json" }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "design_md_path": { "type": ["string", "null"] },
+    "snapshot_path": { "type": ["string", "null"] }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category", "summary", "confidence"],
+      "properties": {
+        "id": { "type": "string" },
+        "category": {
+          "type": "string",
+          "enum": [
+            "component",
+            "api",
+            "model",
+            "design_system",
+            "architecture",
+            "gap"
+          ]
+        },
+        "summary": { "type": "string" },
+        "confidence": {
+          "type": "string",
+          "enum": ["fact", "assumption", "open_question"]
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "evidence.schema.json" }
+        }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement", "acceptance_criteria"],
+      "properties": {
+        "id": { "type": "string" },
+        "statement": { "type": "string" },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      }
+    }
+  }
+}

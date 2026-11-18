@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://product-engineering-agent.local/schemas/approval.schema.json",
+  "title": "ApprovalRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_id", "decision", "actor", "decided_at"],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "decision": { "type": "string", "enum": ["approve", "reject"] },
+    "actor": { "type": "string", "minLength": 1 },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "comment": { "type": "string" }
+  }
+}

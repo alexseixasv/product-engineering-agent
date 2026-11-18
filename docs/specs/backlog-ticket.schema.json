@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://product-engineering-agent.local/schemas/backlog-ticket.schema.json",
+  "title": "BacklogTicket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["key", "type", "title", "description", "acceptance_criteria", "requirement_ids"],
+  "properties": {
+    "key": { "type": "string", "minLength": 1 },
+    "type": { "type": "string", "enum": ["epic", "story", "task"] },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "requirement_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "depends_on": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "definition_of_done": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
