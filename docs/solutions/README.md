@@ -1,5 +1,8 @@
 # Solutions
 
-Durable, non-obvious learnings captured after verified work (Compound Engineering `ce-compound` style).
+Durable Compound Engineering learnings:
 
-Populated from Phase 8 (earlier if a lesson is worth keeping).
+| Learning | Path |
+|---|---|
+| Windows Rust toolchain (GNU/WinLibs) | [windows-rust-toolchain-gnu.md](windows-rust-toolchain-gnu.md) |
+| Evidence-gated facts | [evidence-gated-facts.md](evidence-gated-facts.md) |

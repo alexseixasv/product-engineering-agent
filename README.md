@@ -179,6 +179,49 @@ The system should understand before recommending, validate before concluding, an
 
 ---
 
-**Status:** Engineering Challenge — Initial Specification
+**Status:** Engineering Challenge — Implemented MVP (Phases 0–8)
 
-This repository will evolve incrementally through architecture decisions, implementation milestones, automated tests, and documented tradeoffs.
+This repository evolves through architecture decisions, implementation milestones, automated tests, and documented tradeoffs (Compound Engineering). See [`AGENTS.md`](AGENTS.md), [`docs/adr/`](docs/adr/), [`docs/pdr/`](docs/pdr/), and [`docs/process/AI_USAGE.md`](docs/process/AI_USAGE.md).
+
+## Quick start
+
+### Prerequisites
+
+- Rust stable (`windows-gnu` on Windows without MSVC; put MinGW `bin` on `PATH`)
+- Node.js 20+
+
+### Sample fixture
+
+```bash
+cd fixtures/sample-app
+npm install
+npm run dev
+```
+
+### Backend API
+
+```bash
+# from repo root
+cargo run -p api
+# listens on 127.0.0.1:8080 by default
+# PEA_REPO_PATH=fixtures/sample-app
+```
+
+### Review UI
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open the UI, submit a product request, approve/reject, then generate `design.md` (written under `artifacts/{run_id}/`).
+
+### Tests
+
+```bash
+cargo test --workspace
+cd frontend && npm run test:e2e
+```
+
+DoD evidence map: [`docs/plans/dod-evidence.md`](docs/plans/dod-evidence.md).
